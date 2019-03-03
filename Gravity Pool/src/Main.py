@@ -1,4 +1,5 @@
 import PyQt5.QtWidgets as qw
+import asyncqt
 import sys
 import math
 import requests
@@ -75,13 +76,14 @@ if __name__ == '__main__':
     # @asyncio.coroutine
     async def drawCycle():
         global lastFrame
-        print("tick")
+        global loop
+        #print("tick")
         curTime = time.time()
         if(lastFrame + 1 / targetFPS < curTime):
             drawFrame()
             lastFrame = time.time()
         await asyncio.sleep(lastFrame + 1 / targetFPS - curTime)
-        asyncio.create_task(drawCycle())
+        loop.create_task(drawCycle())
     
     def drawFrame():
         curTime = time.time()
@@ -89,6 +91,8 @@ if __name__ == '__main__':
             currentTrajectory.calculateNextRebound()
     
     app = qw.QApplication(sys.argv)
+    loop = asyncqt.QEventLoop(app)
+    asyncio.set_event_loop(loop)
     w = MainWindow()
     w.show()
     s = Screen()
@@ -96,9 +100,9 @@ if __name__ == '__main__':
     targetFPS = 60
     currentTrajectory = Trajectory(x=0, y=10, vX=10, vY=0, t=0, g=9.8)
     lastFrame = time.time()
-    loop = asyncio.get_event_loop()
     loop.create_task(drawCycle())
-    loop.run_forever()
+    with loop:
+        sys.exit(loop.run_forever())
     # asyncio.run(drawCycle())
     # sys.exit(app.exec_())
     
