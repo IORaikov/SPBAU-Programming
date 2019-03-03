@@ -59,7 +59,7 @@ class Trajectory():
         self.vY = vY
         self.t = t
         self.g = g
-        self.getPosition = lambda t: {'x':(self.x + self.vX * (t - self.t)), 'y':(self.y + self.vY * (t - self.t) - self.g * (t - self.t) ** 2), 'vX':self.vX, 'vY':self.vY - self.g * (t - self.t)}
+        self.getPosition = lambda t: {'x':(self.x + self.vX * (t - self.t)), 'y':(self.y + self.vY * (t - self.t) - self.g / 2 * (t - self.t) ** 2), 'vX':self.vX, 'vY':self.vY - self.g * (t - self.t)}
         try:
             t1 = self.t + (((self.vY - self.vX) + math.sqrt((self.vY - self.vX) ** 2 - 4 * g * (self.x - self.y))) / (2 * self.g))
         except:
@@ -68,10 +68,14 @@ class Trajectory():
             t2 = self.t + (((self.vY + self.vX) + math.sqrt((self.vY + self.vX) ** 2 + 4 * g * (self.x + self.y))) / (2 * self.g))
         except:
             t2 = math.inf
+        if(t1 < 0):
+            t1 = math.inf
+        if(t2 < 0):
+            t2 = math.inf
         print(f"t1={t1},t2={t2}")
         self.nextRebound = min(t1, t2)
         # print(f"Current trajectry:{self.getPosition}")
-        print(f"Trajectory set. Currect time:{self.t}, rebound at {self.nextRebound}")
+        print(f"Trajectory set. Current time:{self.t}, rebound at {self.nextRebound}")
 
     def calculateNextRebound(self):
         reboundPosition = self.getPosition(self.nextRebound)
@@ -99,7 +103,7 @@ if __name__ == '__main__':
     
     def drawFrame():
         curTime = time.time()
-        while currentTrajectory.nextRebound < curTime:
+        while currentTrajectory.nextRebound + startupTime < curTime:
             print("Calculating new trajectory")
             currentTrajectory.calculateNextRebound()
     
@@ -111,8 +115,9 @@ if __name__ == '__main__':
     s = Screen()
     s.show()
     targetFPS = 60
+    startupTime = time.time()
     currentTrajectory = Trajectory(x=0, y=10, vX=10, vY=0, t=0, g=9.8)
-    lastFrame = time.time()
+    lastFrame = startupTime
     loop.create_task(drawCycle())
     with loop:
         sys.exit(loop.run_forever())
