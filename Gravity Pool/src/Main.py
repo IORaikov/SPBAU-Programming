@@ -24,19 +24,23 @@ class MainWindow(qw.QWidget):
         self.fpsLabel = qw.QLabel('Target FPS', self)
         self.fpsLabel.move(0, 50)
         
-        self.fpsField = qw.QLineEdit('60', self)
+        self.fpsField = qw.QLineEdit('10', self)
         self.fpsField.setValidator(QIntValidator(1, 1000))
         self.fpsField.move(60, 50)
         self.fpsField.editingFinished.connect(self.setFPS)
  
         self.quitBtn = qw.QPushButton('Quit', self)
         self.quitBtn.move(50, 200)
-        self.quitBtn.clicked.connect(self.close)
+        self.quitBtn.clicked.connect(closeAll)
         
     @pyqtSlot()
     def setFPS(self):
         targetFPS = int(self.fpsField.text())
         print(targetFPS)
+
+
+def closeAll():
+    loop.stop()
 
 
 class Screen(qw.QWidget):
@@ -118,14 +122,16 @@ if __name__ == '__main__':
     # @asyncio.coroutine
     async def drawCycle():
         global lastFrame
-        global loop
+        # global loop
         # print("tick")
         curTime = time.time()
+        if(curTime - startupTime >= 10):
+            closeAll()
         if(lastFrame + 1 / targetFPS < curTime):
             # print("Drawing new frame")
             drawFrame()
-            refresh = loop.create_task(screenRefresh())
-            await refresh
+            # refresh = loop.create_task(screenRefresh())
+            # await refresh
             lastFrame = time.time()
         await asyncio.sleep(lastFrame + 1 / targetFPS - curTime)
         loop.create_task(drawCycle())
@@ -144,10 +150,11 @@ if __name__ == '__main__':
     w.show()
     s = Screen()
     s.show()
-    targetFPS = 60
+    targetFPS = 10
     startupTime = time.time()
     currentTrajectory = Trajectory(x=0, y=10, vX=10, vY=0, t=0, g=9.8)
     lastFrame = startupTime
+    
     loop.create_task(drawCycle())
     with loop:
         sys.exit(loop.run_forever())
