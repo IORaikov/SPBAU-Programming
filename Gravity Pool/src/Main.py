@@ -59,15 +59,15 @@ class Screen(qw.QWidget):
         qp.end()
 
     def drawBall(self, qp):
-        print("Drawing ball...")
+        #print("Drawing ball...")
         brush = QBrush(Qt.SolidPattern)
         qp.setBrush(brush)
-        print (currentTrajectory.getPosition)
+        #print (currentTrajectory.getPosition)
         curPhysTime = curTime - startupTime
         curPos = currentTrajectory.getPosition(curPhysTime)
         r = 5
-        drawX = round(50 + curPos['x'] - r / 2)
-        drawY = round(curPos['y'] - r / 2)
+        drawX = round(50 + curPos['x'] - r / 2)*10
+        drawY = round(curPos['y'] - r / 2)*10
         print(f"Drawing at x={drawX},y={drawY}")
         qp.drawEllipse(drawX, drawY, r, r)
 
