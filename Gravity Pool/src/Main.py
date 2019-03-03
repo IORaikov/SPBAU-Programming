@@ -8,22 +8,6 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.Qt import QIntValidator
 
 
-@asyncio.coroutine
-def drawCycle():
-    print("tick")
-    curTime = time.time()
-    if(lastFrame + 1 / targetFPS < curTime):
-        return
-    drawFrame()
-    lastFrame = time.time()
-
-
-def drawFrame():
-    curTime = time.time()
-    while currentTrajectory.nextRebound > curTime:
-        currentTrajectory.calculateNextRebound()
-
-    
 class MainWindow(qw.QWidget):
 
     def __init__(self):
@@ -87,6 +71,22 @@ class Trajectory():
 
 
 if __name__ == '__main__':
+
+    # @asyncio.coroutine
+    async def drawCycle():
+        global lastFrame
+        print("tick")
+        curTime = time.time()
+        if(lastFrame + 1 / targetFPS < curTime):
+            return
+        drawFrame()
+        lastFrame = time.time()
+    
+    def drawFrame():
+        curTime = time.time()
+        while currentTrajectory.nextRebound > curTime:
+            currentTrajectory.calculateNextRebound()
+    
     app = qw.QApplication(sys.argv)
     w = MainWindow()
     w.show()
@@ -95,5 +95,7 @@ if __name__ == '__main__':
     targetFPS = 60
     currentTrajectory = Trajectory(x=0, y=10, vX=10, vY=0, t=0, g=9.8)
     lastFrame = time.time()
-    loop = asyncio.get_event_loop()
+    # loop = asyncio.get_event_loop()
+    asyncio.run(drawCycle())
     sys.exit(app.exec_())
+    
