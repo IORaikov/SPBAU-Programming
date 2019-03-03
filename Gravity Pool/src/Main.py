@@ -78,9 +78,10 @@ if __name__ == '__main__':
         print("tick")
         curTime = time.time()
         if(lastFrame + 1 / targetFPS < curTime):
-            return
-        drawFrame()
-        lastFrame = time.time()
+            drawFrame()
+            lastFrame = time.time()
+        await asyncio.sleep(lastFrame + 1 / targetFPS - curTime)
+        asyncio.create_task(drawCycle())
     
     def drawFrame():
         curTime = time.time()
@@ -95,7 +96,9 @@ if __name__ == '__main__':
     targetFPS = 60
     currentTrajectory = Trajectory(x=0, y=10, vX=10, vY=0, t=0, g=9.8)
     lastFrame = time.time()
-    # loop = asyncio.get_event_loop()
-    asyncio.run(drawCycle())
-    sys.exit(app.exec_())
+    loop = asyncio.get_event_loop()
+    loop.create_task(drawCycle())
+    loop.run_forever()
+    # asyncio.run(drawCycle())
+    # sys.exit(app.exec_())
     
