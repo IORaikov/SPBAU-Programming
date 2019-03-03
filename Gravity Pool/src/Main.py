@@ -51,7 +51,7 @@ class Screen(qw.QWidget):
         self.setWindowTitle('Gravity Pool')
 
     def paintEvent(self, event):
-        #print("paintEvent")
+        # print("paintEvent")
         qp = QPainter()
         qp.begin(self)
         self.drawBall(qp)
@@ -59,15 +59,15 @@ class Screen(qw.QWidget):
         qp.end()
 
     def drawBall(self, qp):
-        #print("Drawing ball...")
+        # print("Drawing ball...")
         brush = QBrush(Qt.SolidPattern)
         qp.setBrush(brush)
-        #print (currentTrajectory.getPosition)
+        # print (currentTrajectory.getPosition)
         curPhysTime = curTime - startupTime
         curPos = currentTrajectory.getPosition(curPhysTime)
         r = 5
-        drawX = round(50 + curPos['x'] - r / 2)*10
-        drawY = round(curPos['y'] - r / 2)*10
+        drawX = round(50 + curPos['x'] - r / 2) * 10
+        drawY = round(curPos['y'] - r / 2) * 10
         print(f"Drawing at x={drawX},y={drawY}")
         qp.drawEllipse(drawX, drawY, r, r)
 
@@ -112,6 +112,9 @@ class Trajectory():
 
 if __name__ == '__main__':
 
+    async def screenRefresh():
+        s.update()
+
     # @asyncio.coroutine
     async def drawCycle():
         global lastFrame
@@ -121,6 +124,8 @@ if __name__ == '__main__':
         if(lastFrame + 1 / targetFPS < curTime):
             # print("Drawing new frame")
             drawFrame()
+            refresh = loop.create_task(screenRefresh())
+            await refresh
             lastFrame = time.time()
         await asyncio.sleep(lastFrame + 1 / targetFPS - curTime)
         loop.create_task(drawCycle())
@@ -131,7 +136,6 @@ if __name__ == '__main__':
         while currentTrajectory.nextRebound + startupTime < curTime:
             # print("Calculating new trajectory")
             currentTrajectory.calculateNextRebound()
-        s.repaint()
     
     app = qw.QApplication(sys.argv)
     loop = asyncqt.QEventLoop(app)
