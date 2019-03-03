@@ -51,7 +51,7 @@ class Screen(qw.QWidget):
         self.setWindowTitle('Gravity Pool')
 
     def paintEvent(self, event):
-        print("paintEvent")
+        #print("paintEvent")
         qp = QPainter()
         qp.begin(self)
         self.drawBall(qp)
@@ -131,7 +131,7 @@ if __name__ == '__main__':
         while currentTrajectory.nextRebound + startupTime < curTime:
             # print("Calculating new trajectory")
             currentTrajectory.calculateNextRebound()
-        s.update()
+        s.repaint()
     
     app = qw.QApplication(sys.argv)
     loop = asyncqt.QEventLoop(app)
