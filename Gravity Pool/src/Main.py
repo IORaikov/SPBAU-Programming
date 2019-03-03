@@ -5,8 +5,9 @@ import math
 import requests
 import time
 import asyncio
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.Qt import QIntValidator
+from PyQt5.QtCore import pyqtSlot, Qt
+from PyQt5.QtGui import QPainter
+from PyQt5.Qt import QIntValidator, QBrush
 
 
 class MainWindow(qw.QWidget):
@@ -49,9 +50,28 @@ class Screen(qw.QWidget):
         self.move(600, 300)
         self.setWindowTitle('Gravity Pool')
 
+    def paintEvent(self, event):
+        print("paintEvent")
+        qp = QPainter()
+        qp.begin(self)
+        self.drawBall(qp)
+        # self.drawBoundaries(qp)
+        qp.end()
+
+    def drawBall(self, qp):
+        print("Drawing ball...")
+        brush = QBrush(Qt.SolidPattern)
+        qp.setBrush(brush)
+        print (currentTrajectory.getPosition)
+        curPos = currentTrajectory.getPosition(curPhysTime)
+        r = 5
+        drawX = round(50 + curPos['x'] - r / 2)
+        drawY = round(curPos['y'] - r / 2)
+        print(f"Drawing at x={drawX},y={drawY}")
+        qp.drawEllipse(drawX, drawY, r, r)
+
 
 class Trajectory():
-
     def __init__(self, x, y, vX, vY, t, g):
         self.x = x
         self.y = y
@@ -72,14 +92,14 @@ class Trajectory():
             t1 = math.inf
         if(t2 < 0):
             t2 = math.inf
-        print(f"t1={t1},t2={t2}")
+        # print(f"t1={t1},t2={t2}")
         self.nextRebound = min(t1, t2)
         # print(f"Current trajectry:{self.getPosition}")
         print(f"Trajectory set. Current time:{self.t}, rebound at {self.nextRebound}")
 
     def calculateNextRebound(self):
         reboundPosition = self.getPosition(self.nextRebound)
-        print(f"Rebound position:{reboundPosition} at time {self.nextRebound}")
+        # print(f"Rebound position:{reboundPosition} at time {self.nextRebound}")
         if(reboundPosition['x'] >= 0):
             self.__init__(reboundPosition['x'], reboundPosition['y'], reboundPosition['vY'], reboundPosition['vX'], self.nextRebound, self.g)
         else:
@@ -104,8 +124,11 @@ if __name__ == '__main__':
     def drawFrame():
         curTime = time.time()
         while currentTrajectory.nextRebound + startupTime < curTime:
-            print("Calculating new trajectory")
+            # print("Calculating new trajectory")
             currentTrajectory.calculateNextRebound()
+        global curPhysTime
+        curPhysTime = curTime - startupTime
+        s.refresh()
     
     app = qw.QApplication(sys.argv)
     loop = asyncqt.QEventLoop(app)
