@@ -24,7 +24,7 @@ class MainWindow(qw.QWidget):
         self.fpsLabel = qw.QLabel('Target FPS', self)
         self.fpsLabel.move(0, 50)
         
-        self.fpsField = qw.QLineEdit('10', self)
+        self.fpsField = qw.QLineEdit('60', self)
         self.fpsField.setValidator(QIntValidator(1, 1000))
         self.fpsField.move(60, 50)
         self.fpsField.editingFinished.connect(self.setFPS)
@@ -71,7 +71,7 @@ class Screen(qw.QWidget):
         # curPhysTime = curTime - startupTime
         # curPos = currentTrajectory.getPosition(curPhysTime)
         r = 1
-        #print(f"Drawing ball at ({curX,curY}),while it is at {currentTrajectory.getPosition(curScreenTime)['y']}")
+        # print(f"Drawing ball at ({curX,curY}),while it is at {currentTrajectory.getPosition(curScreenTime)['y']}")
         drawX, drawY = convertCoord(curX, curY)
         # print(f"Drawing at x={drawX},y={drawY}")
         qp.drawEllipse(drawX - r // 2, drawY - r // 2, r, r)
@@ -90,12 +90,12 @@ class Screen(qw.QWidget):
 
 
 def convertCoord(x, y):
-    r1 = 100
-    k1 = 2.5
-    r2 = 100
-    k2 = 5
-    newX = round((x + r1) * k1)
-    newY = round((r2 - y) * k2)
+    xMin = -1
+    xMax = 1
+    yMin = 2
+    yMax = 0
+    newX = round((x - xMin) / (xMax - xMin) * 500)
+    newY = round((y - yMin) / (yMax - yMin) * 500)
     return (newX, newY)
 
 
@@ -126,13 +126,13 @@ class Trajectory():
         # print(f"t1={t1},t2={t2}")
         self.nextRebound = min(t1, t2)
         # print(f"Current trajectry:{self.getPosition}")
-        print(f"Trajectory set. Current time:{self.t}, rebound at {self.nextRebound}. Current screenTime:{curScreenTime}")
-        print(f"Current position:({self.x,self.y}), on screen:({curX,curY})")
+        # print(f"Trajectory set. Current time:{self.t}, rebound at {self.nextRebound}. Current screenTime:{curScreenTime}")
+        # print(f"Current position:({self.x,self.y}), on screen:({curX,curY})")
 
     def calculateNextRebound(self):
         reboundPosition = self.getPosition(self.nextRebound)
         print(f"Rebound position:{reboundPosition} at time {self.nextRebound}")
-        if(reboundPosition['x'] >= 0):
+        if(reboundPosition['x'] > 1e-6 or (abs(reboundPosition['x']) <= 1e-6 and reboundPosition['vX']>0)):
             self.__init__(reboundPosition['x'], reboundPosition['y'], reboundPosition['vY'], reboundPosition['vX'], self.nextRebound, self.g)
         else:
             self.__init__(reboundPosition['x'], reboundPosition['y'], -reboundPosition['vY'], -reboundPosition['vX'], self.nextRebound, self.g)
@@ -174,11 +174,11 @@ if __name__ == '__main__':
             # print("Calculating new trajectory")
             currentTrajectory.calculateNextRebound()
     
-    targetFPS = 120
+    targetFPS = 60
     startupTime = time.time()
     curScreenTime = 0
     curX, curY = (0, 0)
-    currentTrajectory = Trajectory(x=0, y=100, vX=0, vY=0, t=0, g=9.8)
+    currentTrajectory = Trajectory(x=0, y=1, vX=1, vY=0, t=0, g=9.8)
     lastFrame = startupTime
     curX = currentTrajectory.x
     curY = currentTrajectory.y
