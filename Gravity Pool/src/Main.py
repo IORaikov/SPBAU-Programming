@@ -7,7 +7,7 @@ import time
 import asyncio
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QPainter
-from PyQt5.Qt import QIntValidator, QBrush
+from PyQt5.Qt import QIntValidator, QBrush, QPen
 
 
 class MainWindow(qw.QWidget):
@@ -59,7 +59,7 @@ class Screen(qw.QWidget):
         qp = QPainter()
         qp.begin(self)
         self.drawBall(qp)
-        # self.drawBoundaries(qp)
+        self.drawBoundaries(qp)
         qp.end()
 
     def drawBall(self, qp):
@@ -67,13 +67,29 @@ class Screen(qw.QWidget):
         brush = QBrush(Qt.SolidPattern)
         qp.setBrush(brush)
         # print (currentTrajectory.getPosition)
-        curPhysTime = curTime - startupTime
-        curPos = currentTrajectory.getPosition(curPhysTime)
+        # curPhysTime = curTime - startupTime
+        # curPos = currentTrajectory.getPosition(curPhysTime)
         r = 5
-        drawX = round(20 + curPos['x']) * 15 - r // 2
-        drawY = (30 - round(curPos['y'])) * 15 - r // 2
-        print(f"Drawing at x={drawX},y={drawY}")
-        qp.drawEllipse(drawX, drawY, r, r)
+        
+        drawX, drawY = convertCoord(curX, curY)
+        # print(f"Drawing at x={drawX},y={drawY}")
+        qp.drawEllipse(drawX - r // 2, drawY - r // 2, r, r)
+    
+    def drawBoundaries(self, qp):
+        pen = QPen(Qt.black, 2, Qt.SolidLine)
+        qp.setPen(pen)
+        
+        qp.drawLine
+
+
+def convertCoord(x, y):
+    r1 = 100
+    k1 = 2.5
+    r2 = 100
+    k2 = 5
+    newX = round((x + r1) * k1)
+    newY = round((r2 - y) * k2)
+    return (newX, newY)
 
 
 class Trajectory():
@@ -116,7 +132,11 @@ class Trajectory():
 
 if __name__ == '__main__':
 
-    async def screenRefresh():
+    async def screenRefresh(curTime):
+        global curX, curY
+        curPos = currentTrajectory.getPosition(curTime - startupTime)
+        #print(f"Changing positions from {curX},{curY} to {(curPos['x'], curPos['y'])}")
+        curX, curY = (curPos['x'], curPos['y'])
         s.update()
 
     # @asyncio.coroutine
@@ -130,7 +150,7 @@ if __name__ == '__main__':
         if(lastFrame + 1 / targetFPS < curTime):
             # print("Drawing new frame")
             drawFrame()
-            refresh = loop.create_task(screenRefresh())
+            refresh = loop.create_task(screenRefresh(curTime))
             await refresh
             lastFrame = time.time()
         await asyncio.sleep(lastFrame + 1 / targetFPS - curTime)
@@ -147,7 +167,8 @@ if __name__ == '__main__':
     startupTime = time.time()
     currentTrajectory = Trajectory(x=0, y=10, vX=10, vY=0, t=0, g=9.8)
     lastFrame = startupTime
-    
+    curX = currentTrajectory.x
+    curY = currentTrajectory.y
     app = qw.QApplication(sys.argv)
     loop = asyncqt.QEventLoop(app)
     asyncio.set_event_loop(loop)
