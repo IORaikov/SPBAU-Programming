@@ -70,8 +70,8 @@ class Screen(qw.QWidget):
         curPhysTime = curTime - startupTime
         curPos = currentTrajectory.getPosition(curPhysTime)
         r = 5
-        drawX = round(50 + curPos['x'] - r / 2) * 10
-        drawY = round(curPos['y'] - r / 2) * 10
+        drawX = round(20 + curPos['x']) * 15 - r // 2
+        drawY = (30 - round(curPos['y'])) * 15 - r // 2
         print(f"Drawing at x={drawX},y={drawY}")
         qp.drawEllipse(drawX, drawY, r, r)
 
@@ -125,7 +125,7 @@ if __name__ == '__main__':
         # global loop
         # print("tick")
         curTime = time.time()
-        #if(curTime - startupTime >= 10):
+        # if(curTime - startupTime >= 10):
         #    closeAll()
         if(lastFrame + 1 / targetFPS < curTime):
             # print("Drawing new frame")
@@ -143,7 +143,6 @@ if __name__ == '__main__':
             # print("Calculating new trajectory")
             currentTrajectory.calculateNextRebound()
     
-    
     targetFPS = 60
     startupTime = time.time()
     currentTrajectory = Trajectory(x=0, y=10, vX=10, vY=0, t=0, g=9.8)
@@ -156,7 +155,6 @@ if __name__ == '__main__':
     w.show()
     s = Screen()
     s.show()
-    
     
     loop.create_task(drawCycle())
     with loop:
