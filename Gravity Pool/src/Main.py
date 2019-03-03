@@ -7,7 +7,7 @@ import time
 import asyncio
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QPainter
-from PyQt5.Qt import QIntValidator, QBrush, QPen
+from PyQt5.Qt import QIntValidator, QBrush, QPen, QColor, QFont
 
 
 class MainWindow(qw.QWidget):
@@ -24,7 +24,7 @@ class MainWindow(qw.QWidget):
         self.fpsLabel = qw.QLabel('Target FPS', self)
         self.fpsLabel.move(0, 50)
         
-        self.fpsField = qw.QLineEdit('60', self)
+        self.fpsField = qw.QLineEdit('10', self)
         self.fpsField.setValidator(QIntValidator(1, 1000))
         self.fpsField.move(60, 50)
         self.fpsField.editingFinished.connect(self.setFPS)
@@ -60,6 +60,7 @@ class Screen(qw.QWidget):
         qp.begin(self)
         self.drawBall(qp)
         self.drawBoundaries(qp)
+        self.drawTime(qp)
         qp.end()
 
     def drawBall(self, qp):
@@ -69,7 +70,7 @@ class Screen(qw.QWidget):
         # print (currentTrajectory.getPosition)
         # curPhysTime = curTime - startupTime
         # curPos = currentTrajectory.getPosition(curPhysTime)
-        r = 5
+        r = 1
         
         drawX, drawY = convertCoord(curX, curY)
         # print(f"Drawing at x={drawX},y={drawY}")
@@ -79,7 +80,13 @@ class Screen(qw.QWidget):
         pen = QPen(Qt.black, 2, Qt.SolidLine)
         qp.setPen(pen)
         
-        qp.drawLine
+        qp.drawLine(*convertCoord(0, 0), *convertCoord(100, 100))
+        qp.drawLine(*convertCoord(0, 0), *convertCoord(-100, 100))
+
+    def drawTime(self, qp):
+        qp.setPen(QColor(168, 34, 3))
+        qp.setFont(QFont('Times New Roman', 10))
+        qp.drawText(50, 50, f"Time:{round(curScreenTime,2)}")
 
 
 def convertCoord(x, y):
@@ -119,7 +126,7 @@ class Trajectory():
         # print(f"t1={t1},t2={t2}")
         self.nextRebound = min(t1, t2)
         # print(f"Current trajectry:{self.getPosition}")
-        print(f"Trajectory set. Current time:{self.t}, rebound at {self.nextRebound}")
+        print(f"Trajectory set. Current time:{self.t}, rebound at {self.nextRebound}. Current screenTime:{curScreenTime}")
 
     def calculateNextRebound(self):
         reboundPosition = self.getPosition(self.nextRebound)
@@ -133,11 +140,12 @@ class Trajectory():
 if __name__ == '__main__':
 
     async def screenRefresh(curTime):
-        global curX, curY
-        curPos = currentTrajectory.getPosition(curTime - startupTime)
-        #print(f"Changing positions from {curX},{curY} to {(curPos['x'], curPos['y'])}")
+        global curX, curY, curScreenTime
+        curScreenTime = curTime - startupTime
+        curPos = currentTrajectory.getPosition(curScreenTime)
+        # print(f"Changing positions from {curX},{curY} to {(curPos['x'], curPos['y'])}")
         curX, curY = (curPos['x'], curPos['y'])
-        s.update()
+        s.repaint()
 
     # @asyncio.coroutine
     async def drawCycle():
@@ -149,23 +157,24 @@ if __name__ == '__main__':
         #    closeAll()
         if(lastFrame + 1 / targetFPS < curTime):
             # print("Drawing new frame")
-            drawFrame()
+            propagateRebounds(curTime)
             refresh = loop.create_task(screenRefresh(curTime))
             await refresh
-            lastFrame = time.time()
+            lastFrame = curTime
         await asyncio.sleep(lastFrame + 1 / targetFPS - curTime)
         loop.create_task(drawCycle())
     
-    def drawFrame():
+    def propagateRebounds(time):
         global curTime
-        curTime = time.time()
+        curTime = time
         while currentTrajectory.nextRebound + startupTime < curTime:
             # print("Calculating new trajectory")
             currentTrajectory.calculateNextRebound()
     
-    targetFPS = 60
+    targetFPS = 120
     startupTime = time.time()
-    currentTrajectory = Trajectory(x=0, y=10, vX=10, vY=0, t=0, g=9.8)
+    curScreenTime=0
+    currentTrajectory = Trajectory(x=0, y=10, vX=10, vY=10, t=0, g=9.8)
     lastFrame = startupTime
     curX = currentTrajectory.x
     curY = currentTrajectory.y
