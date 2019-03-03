@@ -63,6 +63,7 @@ class Screen(qw.QWidget):
         brush = QBrush(Qt.SolidPattern)
         qp.setBrush(brush)
         print (currentTrajectory.getPosition)
+        curPhysTime = curTime - startupTime
         curPos = currentTrajectory.getPosition(curPhysTime)
         r = 5
         drawX = round(50 + curPos['x'] - r / 2)
@@ -72,6 +73,10 @@ class Screen(qw.QWidget):
 
 
 class Trajectory():
+
+    def getPosition(self, t):
+        return {'x':(self.x + self.vX * (t - self.t)), 'y':(self.y + self.vY * (t - self.t) - self.g / 2 * (t - self.t) ** 2), 'vX':self.vX, 'vY':self.vY - self.g * (t - self.t)}
+
     def __init__(self, x, y, vX, vY, t, g):
         self.x = x
         self.y = y
@@ -79,7 +84,6 @@ class Trajectory():
         self.vY = vY
         self.t = t
         self.g = g
-        self.getPosition = lambda t: {'x':(self.x + self.vX * (t - self.t)), 'y':(self.y + self.vY * (t - self.t) - self.g / 2 * (t - self.t) ** 2), 'vX':self.vX, 'vY':self.vY - self.g * (t - self.t)}
         try:
             t1 = self.t + (((self.vY - self.vX) + math.sqrt((self.vY - self.vX) ** 2 - 4 * g * (self.x - self.y))) / (2 * self.g))
         except:
@@ -122,13 +126,12 @@ if __name__ == '__main__':
         loop.create_task(drawCycle())
     
     def drawFrame():
+        global curTime
         curTime = time.time()
         while currentTrajectory.nextRebound + startupTime < curTime:
             # print("Calculating new trajectory")
             currentTrajectory.calculateNextRebound()
-        global curPhysTime
-        curPhysTime = curTime - startupTime
-        s.refresh()
+        s.update()
     
     app = qw.QApplication(sys.argv)
     loop = asyncqt.QEventLoop(app)
