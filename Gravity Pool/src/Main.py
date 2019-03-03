@@ -126,7 +126,8 @@ class Trajectory():
         # print(f"t1={t1},t2={t2}")
         self.nextRebound = min(t1, t2)
         # print(f"Current trajectry:{self.getPosition}")
-        print(f"Trajectory set. Current time:{self.t}, rebound at {self.nextRebound}. Current screenTime:{curScreenTime}")
+        #print(f"Trajectory set. Current time:{self.t}, rebound at {self.nextRebound}. Current screenTime:{curScreenTime}")
+        print(f"Current position:({self.x,self.y}), on screen:({curX,curY})")
 
     def calculateNextRebound(self):
         reboundPosition = self.getPosition(self.nextRebound)
@@ -174,7 +175,8 @@ if __name__ == '__main__':
     targetFPS = 120
     startupTime = time.time()
     curScreenTime=0
-    currentTrajectory = Trajectory(x=0, y=10, vX=10, vY=10, t=0, g=9.8)
+    curX,curY=(0,0)
+    currentTrajectory = Trajectory(x=0, y=100, vX=0, vY=0, t=0, g=9.8)
     lastFrame = startupTime
     curX = currentTrajectory.x
     curY = currentTrajectory.y
