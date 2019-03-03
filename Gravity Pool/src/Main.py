@@ -71,7 +71,7 @@ class Screen(qw.QWidget):
         # curPhysTime = curTime - startupTime
         # curPos = currentTrajectory.getPosition(curPhysTime)
         r = 1
-        
+        #print(f"Drawing ball at ({curX,curY}),while it is at {currentTrajectory.getPosition(curScreenTime)['y']}")
         drawX, drawY = convertCoord(curX, curY)
         # print(f"Drawing at x={drawX},y={drawY}")
         qp.drawEllipse(drawX - r // 2, drawY - r // 2, r, r)
@@ -112,11 +112,11 @@ class Trajectory():
         self.t = t
         self.g = g
         try:
-            t1 = self.t + (((self.vY - self.vX) + math.sqrt((self.vY - self.vX) ** 2 - 4 * g * (self.x - self.y))) / (2 * self.g))
+            t1 = self.t + (((self.vY - self.vX) + math.sqrt((self.vY - self.vX) ** 2 - 2 * g * (self.x - self.y))) / (self.g))
         except:
             t1 = math.inf
         try:
-            t2 = self.t + (((self.vY + self.vX) + math.sqrt((self.vY + self.vX) ** 2 + 4 * g * (self.x + self.y))) / (2 * self.g))
+            t2 = self.t + (((self.vY + self.vX) + math.sqrt((self.vY + self.vX) ** 2 + 2 * g * (self.x + self.y))) / (self.g))
         except:
             t2 = math.inf
         if(t1 < 0):
@@ -126,12 +126,12 @@ class Trajectory():
         # print(f"t1={t1},t2={t2}")
         self.nextRebound = min(t1, t2)
         # print(f"Current trajectry:{self.getPosition}")
-        #print(f"Trajectory set. Current time:{self.t}, rebound at {self.nextRebound}. Current screenTime:{curScreenTime}")
+        print(f"Trajectory set. Current time:{self.t}, rebound at {self.nextRebound}. Current screenTime:{curScreenTime}")
         print(f"Current position:({self.x,self.y}), on screen:({curX,curY})")
 
     def calculateNextRebound(self):
         reboundPosition = self.getPosition(self.nextRebound)
-        # print(f"Rebound position:{reboundPosition} at time {self.nextRebound}")
+        print(f"Rebound position:{reboundPosition} at time {self.nextRebound}")
         if(reboundPosition['x'] >= 0):
             self.__init__(reboundPosition['x'], reboundPosition['y'], reboundPosition['vY'], reboundPosition['vX'], self.nextRebound, self.g)
         else:
@@ -141,12 +141,14 @@ class Trajectory():
 if __name__ == '__main__':
 
     async def screenRefresh(curTime):
-        global curX, curY, curScreenTime
-        curScreenTime = curTime - startupTime
-        curPos = currentTrajectory.getPosition(curScreenTime)
-        # print(f"Changing positions from {curX},{curY} to {(curPos['x'], curPos['y'])}")
-        curX, curY = (curPos['x'], curPos['y'])
-        s.repaint()
+        lock = asyncio.Lock()
+        async with lock:
+            global curX, curY, curScreenTime
+            curScreenTime = curTime - startupTime
+            curPos = currentTrajectory.getPosition(curScreenTime)
+            # print(f"Changing positions from {curX},{curY} to {(curPos['x'], curPos['y'])}")
+            curX, curY = (curPos['x'], curPos['y'])
+            s.repaint()
 
     # @asyncio.coroutine
     async def drawCycle():
@@ -158,24 +160,24 @@ if __name__ == '__main__':
         #    closeAll()
         if(lastFrame + 1 / targetFPS < curTime):
             # print("Drawing new frame")
-            propagateRebounds(curTime)
-            refresh = loop.create_task(screenRefresh(curTime))
+            propagateRebounds(lastFrame + 1 / targetFPS)
+            refresh = loop.create_task(screenRefresh(lastFrame + 1 / targetFPS))
             await refresh
-            lastFrame = curTime
+            lastFrame = lastFrame + 1 / targetFPS
         await asyncio.sleep(lastFrame + 1 / targetFPS - curTime)
         loop.create_task(drawCycle())
     
     def propagateRebounds(time):
         global curTime
         curTime = time
-        while currentTrajectory.nextRebound + startupTime < curTime:
+        while currentTrajectory.nextRebound < curTime - startupTime:
             # print("Calculating new trajectory")
             currentTrajectory.calculateNextRebound()
     
     targetFPS = 120
     startupTime = time.time()
-    curScreenTime=0
-    curX,curY=(0,0)
+    curScreenTime = 0
+    curX, curY = (0, 0)
     currentTrajectory = Trajectory(x=0, y=100, vX=0, vY=0, t=0, g=9.8)
     lastFrame = startupTime
     curX = currentTrajectory.x
