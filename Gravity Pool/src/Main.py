@@ -7,7 +7,7 @@ import time
 import asyncio
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QPainter
-from PyQt5.Qt import QIntValidator, QBrush, QPen, QColor, QFont
+from PyQt5.Qt import QIntValidator, QBrush, QPen, QColor, QFont,QDoubleValidator
 
 
 class MainWindow(qw.QWidget):
@@ -26,8 +26,39 @@ class MainWindow(qw.QWidget):
         
         self.fpsField = qw.QLineEdit('60', self)
         self.fpsField.setValidator(QIntValidator(1, 1000))
-        self.fpsField.move(60, 50)
+        self.fpsField.move(100, 50)
         self.fpsField.editingFinished.connect(self.setFPS)
+
+        self.yLabel = qw.QLabel('y',self)
+        self.yLabel.move(0,70)
+
+        self.yField = qw.QLineEdit('1', self)
+        self.yField.setValidator(QDoubleValidator())
+        self.yField.move(100, 70)
+
+        self.vXLabel = qw.QLabel('Horisontal speed',self)
+        self.vXLabel.move(0,90)
+
+        self.vXField = qw.QLineEdit('1', self)
+        self.vXField.setValidator(QDoubleValidator())
+        self.vXField.move(100, 90)
+        #self.vXField.editingFinished.connect(self.setvX)
+
+        self.vYLabel = qw.QLabel('Vertical speed',self)
+        self.vYLabel.move(0,110)
+
+        self.vYField = qw.QLineEdit('1', self)
+        self.vYField.setValidator(QDoubleValidator())
+        self.vYField.move(100, 110)
+
+        self.setBtn = qw.QPushButton('Set',self)
+        self.setBtn.move(0,200)
+        self.setBtn.clicked.connect(self.newLaunch)
+
+
+
+
+        
  
         self.quitBtn = qw.QPushButton('Quit', self)
         self.quitBtn.move(50, 200)
@@ -36,11 +67,22 @@ class MainWindow(qw.QWidget):
     @pyqtSlot()
     def setFPS(self):
         targetFPS = int(self.fpsField.text())
-        print(targetFPS)
+        #print(targetFPS)
+    @pyqtSlot()
+    def newLaunch(self):
+        currentTrajectory.__init__(0,int(self.yField.text()),int(self.vXField.text()),int(self.vYField.text()),0,9.8)
+        newTime=time.time()
+        lastFrame+=newTime-startupTime
+        startupTime=newTime
+        loop.stop()
+        loop.create_task(drawCycle())
+        #print(targetFPS)
 
 
 def closeAll():
+    stopped=True
     loop.stop()
+    app.close()
 
 
 class Screen(qw.QWidget):
@@ -127,11 +169,11 @@ class Trajectory():
         self.nextRebound = min(t1, t2)
         # print(f"Current trajectry:{self.getPosition}")
         # print(f"Trajectory set. Current time:{self.t}, rebound at {self.nextRebound}. Current screenTime:{curScreenTime}")
-        # print(f"Current position:({self.x,self.y}), on screen:({curX,curY})")
+        print(f"Current position:({self.x,self.y}), on screen:({curX,curY})")
 
     def calculateNextRebound(self):
         reboundPosition = self.getPosition(self.nextRebound)
-        print(f"Rebound position:{reboundPosition} at time {self.nextRebound}")
+        #print(f"Rebound position:{reboundPosition} at time {self.nextRebound}")
         if(reboundPosition['x'] > 1e-6 or (abs(reboundPosition['x']) <= 1e-6 and reboundPosition['vX']>0)):
             self.__init__(reboundPosition['x'], reboundPosition['y'], reboundPosition['vY'], reboundPosition['vX'], self.nextRebound, self.g)
         else:
@@ -189,10 +231,12 @@ if __name__ == '__main__':
     w.show()
     s = Screen()
     s.show()
-    
+    stopped = False
     loop.create_task(drawCycle())
-    with loop:
-        sys.exit(loop.run_forever())
+
+    while not stopped:
+        with loop:
+            sys.exit(loop.run_forever())
     # asyncio.run(drawCycle())
     # sys.exit(app.exec_())
     
