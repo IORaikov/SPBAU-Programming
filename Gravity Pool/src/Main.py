@@ -70,7 +70,7 @@ class Screen(qw.QWidget):
         # print (currentTrajectory.getPosition)
         # curPhysTime = curTime - startupTime
         # curPos = currentTrajectory.getPosition(curPhysTime)
-        r = 1
+        r = 5
         # print(f"Drawing ball at ({curX,curY}),while it is at {currentTrajectory.getPosition(curScreenTime)['y']}")
         drawX, drawY = convertCoord(curX, curY)
         # print(f"Drawing at x={drawX},y={drawY}")
@@ -84,9 +84,11 @@ class Screen(qw.QWidget):
         qp.drawLine(*convertCoord(0, 0), *convertCoord(-100, 100))
 
     def drawTime(self, qp):
-        qp.setPen(QColor(168, 34, 3))
-        qp.setFont(QFont('Times New Roman', 10))
-        qp.drawText(50, 50, f"Time:{round(curScreenTime,2)}")
+        doDrawTime = False
+        if doDrawTime:
+            qp.setPen(QColor(168, 34, 3))
+            qp.setFont(QFont('Times New Roman', 10))
+            qp.drawText(50, 50, f"Time:{round(curScreenTime,2)}")
 
 
 def convertCoord(x, y):
@@ -178,7 +180,7 @@ if __name__ == '__main__':
     startupTime = time.time()
     curScreenTime = 0
     curX, curY = (0, 0)
-    currentTrajectory = Trajectory(x=0, y=1, vX=1, vY=0, t=0, g=9.8)
+    currentTrajectory = Trajectory(x=0, y=1, vX=math.sqrt(2/3*9.8), vY=0, t=0, g=9.8)
     lastFrame = startupTime
     curX = currentTrajectory.x
     curY = currentTrajectory.y
